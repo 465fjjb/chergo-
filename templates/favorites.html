@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="favorites-container">
+    <h1>Избранные места</h1>
+    
+    {% if not places %}
+    <p class="no-favorites">У вас пока нет избранных мест</p>
+    {% else %}
+    <div class="favorites-grid">
+        {% for place in places %}
+        <div class="favorite-card" data-id="{{ place.id }}">
+            <img src="/static/images/{{ place.images[0] }}" alt="{{ place.name }}">
+            <div class="favorite-info">
+                <h2>{{ place.name }}</h2>
+                <p>{{ place.short_description }}</p>
+                {% if place.note %}
+                <div class="favorite-note">
+                    <strong>Ваша заметка:</strong>
+                    <p>{{ place.note }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <button class="remove-favorite-btn" data-id="{{ place.id }}">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик кнопки удаления из избранного
+        document.querySelectorAll('.remove-favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const placeId = this.getAttribute('data-id');
+                
+                fetch('/api/toggle_favorite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ place_id: parseInt(placeId) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.reload();
+                });
+            });
+        });
+        
+        // Обработчик клика на карточку избранного
+        document.querySelectorAll('.favorite-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Игнорируем клики по кнопке удаления
+                if (!e.target.classList.contains('remove-favorite-btn')) {
+                    const placeId = this.getAttribute('data-id');
+                    window.location.href = `/place/${placeId}`;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

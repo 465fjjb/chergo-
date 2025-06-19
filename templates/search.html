@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-container">
+    <form action="/search" method="get">
+        <input type="text" name="q" placeholder="Поиск..." inputmode="search" autocomplete="off">
+        <select name="category">
+            <option value="all" {% if category == 'all' %}selected{% endif %}>Все категории</option>
+            <option value="museum" {% if category == 'museum' %}selected{% endif %}>Музеи</option>
+            <option value="monument" {% if category == 'monument' %}selected{% endif %}>Памятники</option>
+            <option value="architecture" {% if category == 'architecture' %}selected{% endif %}>Архитектура</option>
+            <option value="park" {% if category == 'park' %}selected{% endif %}>Парки</option>
+        </select>
+        <button type="submit">Найти</button>
+    </form>
+    
+    <div class="search-results">
+        {% if query %}
+        <h2>Результаты поиска: "{{ query }}"</h2>
+        {% else %}
+        <h2>Все исторические места</h2>
+        {% endif %}
+        
+        <div class="results-grid">
+            {% for place in places %}
+            <div class="result-card" data-id="{{ place.id }}">
+                <img src="/static/images/{{ place.images[0] }}" alt="{{ place.name }}">
+                <div class="result-info">
+                    <h3>{{ place.name }}</h3>
+                    <p>{{ place.short_description }}</p>
+                    <span class="category">{{ place.category_label }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+    // Проверяем PWA-режим
+    const isPWA = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
+    function forceKeyboard() {
+        const fakeInput = document.getElementById('fake-input');
+        const mainInput = document.getElementById('search-input');
+        
+        // 1. Фокус на скрытое поле
+        fakeInput.focus();
+        
+        // 2. Перенос фокуса через 300ms
+        setTimeout(() => {
+            mainInput.removeAttribute('readonly');
+            mainInput.focus();
+            
+            // 3. Для Android
+            if (/Android/i.test(navigator.userAgent)) {
+                mainInput.click();
+            }
+        }, 300);
+        
+        // 4. Показываем кнопку-запас если фокус не сработал
+        setTimeout(() => {
+            if (document.activeElement !== mainInput) {
+                document.getElementById('ios-keyboard-btn').style.display = 'block';
+            }
+        }, 1500);
+    }
+    
+    // Показываем кнопку только в PWA на iOS
+    if (isPWA && /iPhone|iPad/i.test(navigator.userAgent)) {
+        document.getElementById('ios-keyboard-btn').style.display = 'block';
+    }
+</script>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчики кликов на карточки результатов
+        document.querySelectorAll('.result-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const placeId = this.getAttribute('data-id');
+                window.location.href = `/place/${placeId}`;
+            });
+        });
+    });
+</script>
+{% endblock %}

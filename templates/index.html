@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="map-container">
+    <div id="map"></div>
+</div>
+
+<div class="places-list">
+    <h2>Исторические места</h2>
+    <div class="places-grid">
+        {% for place in places %}
+        <div class="place-card" data-id="{{ place.id }}">
+            <img src="/static/images/{{ place.images[0] }}" alt="{{ place.name }}">
+            <h3>{{ place.name }}</h3>
+            <p>{{ place.short_description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Преобразуем данные Python в JSON
+        const placesData = JSON.parse('{{ places|tojson|safe }}');
+        
+        // Инициализация карты с метками
+        if (typeof initMap === 'function') {
+            initMap(placesData);
+        }
+        
+        // Обработчики кликов на карточки мест
+        document.querySelectorAll('.place-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                const placeId = this.getAttribute('data-id');
+                if (placeId) {
+                    window.location.href = '/place/' + placeId;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

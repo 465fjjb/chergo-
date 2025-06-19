@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="saved-routes-container">
+    <h1>Сохраненные маршруты</h1>
+    
+    {% if not routes %}
+    <p class="no-routes">У вас пока нет сохраненных маршрутов</p>
+    {% else %}
+    <div class="routes-list">
+        {% for route in routes %}
+        <div class="route-card" data-id="{{ route.id }}">
+            <h2>{{ route.name }}</h2>
+            <p>{{ route.places|length }} мест</p>
+            
+            <div class="route-places-preview">
+                {% for place in route.places[:3] %}
+                <img src="/static/images/{{ place.images[0] }}" alt="{{ place.name }}">
+                {% endfor %}
+                {% if route.places|length > 3 %}
+                <span>+{{ route.places|length - 3 }} ещё</span>
+                {% endif %}
+            </div>
+            
+            <div class="route-actions">
+                <button class="btn view-route-btn" data-ids="{{ route.place_ids|join(',') }}">Посмотреть</button>
+                <button class="btn delete-route-btn" data-id="{{ route.id }}">Удалить</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик кнопки просмотра маршрута
+        document.querySelectorAll('.view-route-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const placeIds = this.getAttribute('data-ids');
+                window.location.href = `/route?places=${placeIds}`;
+            });
+        });
+        
+        // Обработчик кнопки удаления маршрута
+        document.querySelectorAll('.delete-route-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (confirm('Вы уверены, что хотите удалить этот маршрут?')) {
+                    const routeId = this.getAttribute('data-id');
+                    
+                    fetch('/api/delete_route', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ route_id: parseInt(routeId) })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+        
+        // Обработчик клика на карточку маршрута
+        document.querySelectorAll('.route-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const placeIds = this.querySelector('.view-route-btn').getAttribute('data-ids');
+                window.location.href = `/route?places=${placeIds}`;
+            });
+        });
+    });
+</script>
+{% endblock %}

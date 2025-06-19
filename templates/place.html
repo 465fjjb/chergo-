@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="place-container">
+    <div class="place-gallery">
+        <div class="main-image">
+            <img src="/static/images/{{ place.images[0] }}" alt="{{ place.name }}" onerror="this.src='/static/images/default.jpg'">
+        </div>
+        <div class="thumbnails">
+            {% for image in place.images[1:] %}
+            <img src="/static/images/{{ image }}" alt="{{ place.name }}" onerror="this.src='/static/images/default.jpg'">
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="place-info">
+        <h1>{{ place.name }}</h1>
+        <div class="place-meta">
+            <span class="category">{{ place.category_label }}</span>
+            <span class="address">{{ place.address }}</span>
+        </div>
+        
+        <div class="place-actions">
+            <button class="btn favorite-btn" data-id="{{ place.id }}">
+                {% if is_favorite %}★ Удалить из избранного{% else %}☆ Добавить в избранное{% endif %}
+            </button>
+            <button class="btn route-btn" data-id="{{ place.id }}">Построить маршрут</button>
+            
+        </div>
+        
+        <div class="place-description">
+            <h2>Описание</h2>
+            <p>{{ place.description }}</p>
+            
+            {% if place.history %}
+            <h2>История</h2>
+            <p>{{ place.history }}</p>
+            {% endif %}
+            
+            {% if place.work_hours %}
+            <h2>Часы работы</h2>
+            <p>{{ place.work_hours }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="place-map">
+           
+            <div id="place-map" 
+                 data-lat="{{ place.coordinates.lat }}" 
+                 data-lng="{{ place.coordinates.lng }}"
+                 data-title="{{ place.name }}"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js"></script>
+<script>
+    let placeMap;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapEl = document.getElementById('place-map');
+        placeMap = initPlaceMap(
+            parseFloat(mapEl.dataset.lat),
+            parseFloat(mapEl.dataset.lng),
+            mapEl.dataset.title
+        );
+
+        document.querySelector('.favorite-btn').addEventListener('click', function() {
+            const placeId = this.dataset.id;
+            fetch('/api/toggle_favorite', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({place_id: parseInt(placeId)})
+            }).then(() => window.location.reload());
+        });
+
+        document.querySelector('.route-btn').addEventListener('click', function() {
+            window.location.href = `/route?places=${this.dataset.id}`;
+        });
+
+        document.querySelector('.gps-btn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    placeMap.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                    L.marker([pos.coords.latitude, pos.coords.longitude])
+                        .addTo(placeMap)
+                        .bindPopup("Вы здесь")
+                        .openPopup();
+                }, null, {enableHighAccuracy: true});
+            } else {
+                alert("Геолокация не поддерживается");
+            }
+        });
+    });
+</script>
+{% endblock %}

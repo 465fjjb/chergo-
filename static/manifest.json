@@ -1,0 +1,12 @@
+{
+  "name": "Исторические места Череповца",
+  "short_name": "ЧереповецGo",
+  "start_url": "/",
+  "display": "standalone",
+"ios": {
+  "supportsTouch": true
+},
+  "background_color": "#ffffff",
+  "theme_color": "#3367D6",
+  "description": "Путеводитель по историческим местам Череповца"
+}

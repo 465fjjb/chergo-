@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="route-container">
+    <h1>{{ route_name }}</h1>
+    
+    <div class="route-map-container">
+        <div id="route-map"></div>
+    </div>
+    
+    {% if places %}
+    <div class="route-places">
+        <h2>Места в маршруте</h2>
+        <ul>
+            {% for place in places %}
+            <li>
+                <h3>{{ place.name }}</h3>
+                <p>{{ place.address }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <div class="route-actions">
+        <button id="save-route-btn" class="btn">Сохранить маршрут</button>
+        <button id="share-route-btn" class="btn">Поделиться</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const places = JSON.parse('{{ places|tojson|safe }}');
+        const placeIds = places.map(function(p) { return p.id; }).join(',');
+        
+        // Инициализация карты
+        if (places.length > 0 && typeof initRouteMap === 'function') {
+            initRouteMap(places);
+        }
+        
+        // Обработчики кнопок
+        document.getElementById('save-route-btn').addEventListener('click', function() {
+            var routeName = prompt('Введите название маршрута:', '{{ route_name }}');
+            if (routeName) {
+                fetch('/api/save_route', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        place_ids: places.map(function(p) { return p.id; }),
+                        name: routeName
+                    })
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(data) {
+                    alert('Маршрут сохранен!');
+                    window.location.href = '/saved-routes';
+                }).catch(function(error) {
+                    console.error('Error:', error);
+                    alert('Ошибка при сохранении');
+                });
+            }
+        });
+        
+        document.getElementById('share-route-btn').addEventListener('click', function() {
+            var url = window.location.origin + '/route?places=' + placeIds + 
+                     '&name=' + encodeURIComponent('{{ route_name }}');
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Маршрут по Череповцу',
+                    text: 'Посмотрите мой маршрут',
+                    url: url
+                }).catch(function(err) {
+                    copyToClipboard(url);
+                });
+            } else {
+                copyToClipboard(url);
+            }
+        });
+        
+        function copyToClipboard(text) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Ссылка скопирована!');
+        }
+    });
+</script>
+{% endblock %}

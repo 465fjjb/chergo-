@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<meta name="theme-color" content="#3367D6">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<title>Исторические места Череповца</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+{% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Исторические места Череповца</h1>
+            <button class="menu-toggle">☰</button>
+        </header>
+        
+        <nav class="sidebar">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="/search">Поиск</a></li>
+                <li><a href="/favorites">Избранное</a></li>
+                <li><a href="/saved-routes">Мои маршруты</a></li>
+            </ul>
+        </nav>
+        
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    {% block scripts %}{% endblock %}
+    <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/static/js/service-worker.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful:', registration.scope);
+      }, function(error) {
+        console.log('ServiceWorker registration failed:', error);
+      });
+  });
+}
+</script>
+</body>
+</html>
